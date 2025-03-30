@@ -1,0 +1,4 @@
+256
+
+mushroom_biome
+
