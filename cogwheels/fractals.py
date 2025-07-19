@@ -18,36 +18,42 @@ active_fractals = dict()
 
 
 class Fractal:
-    def __init__(self,
-                 title,
-                 point,
-                 scale,
-                 max_iterations,
-                 color_scheme=((0, 0, 0), (255, 255, 255), (255, 255, 255))
-                 ):
-        buttons = [ui.Button(emoji="↖️", custom_id=ID + "left_up", style=BLUE),
-                   ui.Button(emoji="⬆️", custom_id=ID + "up", style=BLUE),
-                   ui.Button(emoji="↗️", custom_id=ID + "right_up", style=BLUE),
-                   ui.Button(label="2x", custom_id=ID + "zoom+2", style=GREEN),
-                   ui.Button(label="0.5x", custom_id=ID + "zoom-2", style=RED),
-                   ui.Button(emoji="⬅️", custom_id=ID + "left", style=BLUE),
-                   ui.Button(emoji="⚫", custom_id=ID + "mid", style=GRAY, disabled=True),
-                   ui.Button(emoji="➡️", custom_id=ID + "right", style=BLUE),
-                   ui.Button(label="4x", custom_id=ID + "zoom+4", style=GREEN),
-                   ui.Button(label="0.25x", custom_id=ID + "zoom-4", style=RED),
-                   ui.Button(emoji="↙️", custom_id=ID + "left_down", style=BLUE),
-                   ui.Button(emoji="⬇️", custom_id=ID + "down", style=BLUE),
-                   ui.Button(emoji="↘️", custom_id=ID + "right_down", style=BLUE),
-                   ui.Button(label="📏📈", custom_id=ID + "+iterations", style=GREEN),
-                   ui.Button(label="📏📉", custom_id=ID + "-iterations", style=RED),
-                   ]
-        self.components = [ui.ActionRow(*buttons[:5]),
-                           ui.ActionRow(*buttons[5:10]),
-                           ui.ActionRow(*buttons[10:])]
+    def __init__(
+        self,
+        title,
+        point,
+        scale,
+        max_iterations,
+        color_scheme=((0, 0, 0), (255, 255, 255), (255, 255, 255)),
+    ):
+        buttons = [
+            ui.Button(emoji="↖️", custom_id=ID + "left_up", style=BLUE),
+            ui.Button(emoji="⬆️", custom_id=ID + "up", style=BLUE),
+            ui.Button(emoji="↗️", custom_id=ID + "right_up", style=BLUE),
+            ui.Button(label="2x", custom_id=ID + "zoom+2", style=GREEN),
+            ui.Button(label="0.5x", custom_id=ID + "zoom-2", style=RED),
+            ui.Button(emoji="⬅️", custom_id=ID + "left", style=BLUE),
+            ui.Button(emoji="⚫", custom_id=ID + "mid", style=GRAY, disabled=True),
+            ui.Button(emoji="➡️", custom_id=ID + "right", style=BLUE),
+            ui.Button(label="4x", custom_id=ID + "zoom+4", style=GREEN),
+            ui.Button(label="0.25x", custom_id=ID + "zoom-4", style=RED),
+            ui.Button(emoji="↙️", custom_id=ID + "left_down", style=BLUE),
+            ui.Button(emoji="⬇️", custom_id=ID + "down", style=BLUE),
+            ui.Button(emoji="↘️", custom_id=ID + "right_down", style=BLUE),
+            ui.Button(label="📏📈", custom_id=ID + "+iterations", style=GREEN),
+            ui.Button(label="📏📉", custom_id=ID + "-iterations", style=RED),
+        ]
+        self.components = [
+            ui.ActionRow(*buttons[:5]),
+            ui.ActionRow(*buttons[5:10]),
+            ui.ActionRow(*buttons[10:]),
+        ]
         self.point = list(point)
         self.scale = scale
         self.set_color = cp.array(color_scheme[-1], dtype=cp.uint8)
-        self.color_scheme = [cp.array(color, dtype=cp.uint8) for color in color_scheme[:-1]]
+        self.color_scheme = [
+            cp.array(color, dtype=cp.uint8) for color in color_scheme[:-1]
+        ]
         self.max_iterations = max_iterations
         self.resolution = 512
         self.generating_time = None
@@ -62,7 +68,7 @@ class Fractal:
             self.scale *= 2
         elif action == "zoom-4":
             self.scale *= 4
-        elif action == "+iterations" and self.max_iterations < 2 ** 18:
+        elif action == "+iterations" and self.max_iterations < 2**18:
             self.max_iterations *= 2
         elif action == "-iterations" and self.max_iterations > 1:
             self.max_iterations //= 2
@@ -92,7 +98,9 @@ class Fractal:
         max_iterations = self.max_iterations
         self.max_iterations = max_iterations
 
-        stream = cp.cuda.Stream(non_blocking=True)  # я не знаю что делает эта штука, но она повышала производительность
+        stream = cp.cuda.Stream(
+            non_blocking=True
+        )  # я не знаю что делает эта штука, но она повышала производительность
         # примерно на 20% в прошлых тестах поэтому я её оставил
         with stream:
             iterations = self.function(real, imag, max_iterations=max_iterations)
@@ -125,7 +133,8 @@ class Fractal:
             f"X:\t{self.point[0]}\n"
             f"Y:\t{self.point[1]}\n"
             f"Приближение:\t2^{-round(math.log2(self.scale))}\n"
-            f"Точность:\t{self.max_iterations}")
+            f"Точность:\t{self.max_iterations}"
+        )
 
     def get_message_kwargs(self) -> dict:
         output = dict()
@@ -141,8 +150,12 @@ class Fractal:
         value = cp.clip(value, 0, 1)
         color_indices = (value * (len(self.color_scheme) - 1)).astype(cp.int32)
         segment_value = (value * (len(self.color_scheme) - 1)) - color_indices
-        start_colors = cp.stack([self.color_scheme[i] for i in range(len(self.color_scheme) - 1)])
-        end_colors = cp.stack([self.color_scheme[i + 1] for i in range(len(self.color_scheme) - 1)])
+        start_colors = cp.stack(
+            [self.color_scheme[i] for i in range(len(self.color_scheme) - 1)]
+        )
+        end_colors = cp.stack(
+            [self.color_scheme[i + 1] for i in range(len(self.color_scheme) - 1)]
+        )
         start_color = start_colors[color_indices]
         end_color = end_colors[color_indices]
         result = start_color + segment_value[..., None] * (end_color - start_color)
@@ -178,44 +191,51 @@ class MandelbrotSet(Fractal):
 
         # Define CUDA grid and block dimensions
         threads_per_block = (16, 16)
-        blocks_per_grid = (int((real.shape[0] + threads_per_block[0] - 1) / threads_per_block[0]),
-                           int((real.shape[1] + threads_per_block[1] - 1) / threads_per_block[1]))
+        blocks_per_grid = (
+            int((real.shape[0] + threads_per_block[0] - 1) / threads_per_block[0]),
+            int((real.shape[1] + threads_per_block[1] - 1) / threads_per_block[1]),
+        )
 
         # Launch kernel
-        self.mandelbrot_kernel[blocks_per_grid, threads_per_block](real, imag, max_iterations, result)
+        self.mandelbrot_kernel[blocks_per_grid, threads_per_block](
+            real, imag, max_iterations, result
+        )
 
         return result
 
 
 def hex_to_rgb(hex_code: str) -> tuple:
-    hex_code = hex_code.lstrip('#')
+    hex_code = hex_code.lstrip("#")
     r = int(hex_code[0:2], 16)
     g = int(hex_code[2:4], 16)
     b = int(hex_code[4:6], 16)
     return r, g, b
 
 
-class Cog(commands.Cog):
+class FractalCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.slash_command(name="mandelbrot", description="посетите множество Мандельброта", guild_ids=GUILD_IDS)
-    async def mandelbrot(self,
-                         inter: disnake.ApplicationCommandInteraction,
-                         x: float = -1,
-                         y: float = 0,
-                         zoom: float = 0.5,
-                         ):
+    @commands.slash_command(
+        name="mandelbrot",
+        description="посетите множество Мандельброта",
+        guild_ids=GUILD_IDS,
+    )
+    async def mandelbrot(
+        self,
+        inter: disnake.ApplicationCommandInteraction,
+        x: float = -1,
+        y: float = 0,
+        zoom: float = 0.5,
+    ):
         await inter.response.defer()
         global active_fractals
         point = x, y
         scale = 1 / zoom
         color_scheme = (hex_to_rgb("31222b"), hex_to_rgb("fff075"), (0, 0, 0))
-        mandelbrot_set = MandelbrotSet("Множество Мандельброта",
-                                       point,
-                                       scale,
-                                       512,
-                                       color_scheme)
+        mandelbrot_set = MandelbrotSet(
+            "Множество Мандельброта", point, scale, 512, color_scheme
+        )
         message = await inter.followup.send(**mandelbrot_set.get_message_kwargs())
         active_fractals[message.id] = mandelbrot_set
 
@@ -224,21 +244,25 @@ class Cog(commands.Cog):
         if not inter.component.custom_id.startswith(ID):
             return
         if inter.message.id not in active_fractals:
-            await inter.response.send_message("Это окно уже не работает, активируйте новое с помощью /mandelbrot",
-                                              ephemeral=True)
+            await inter.response.send_message(
+                "Это окно уже не работает, активируйте новое с помощью /mandelbrot",
+                ephemeral=True,
+            )
             return
         await inter.response.defer()
-        action = inter.component.custom_id[len(ID):]
+        action = inter.component.custom_id[len(ID) :]
         print(f"Фракталы: {inter.author.name} - {action}")
         fractal = active_fractals[inter.message.id]
         fractal.handle_action(action)
         image_file = fractal.generate_image_file()
         inter.message.attachments = []
-        await inter.followup.edit_message(message_id=inter.message.id,
-                                          file=image_file,
-                                          attachments=[],
-                                          content=fractal.get_text(),
-                                          )
+        await inter.followup.edit_message(
+            message_id=inter.message.id,
+            file=image_file,
+            attachments=[],
+            content=fractal.get_text(),
+        )
+
 
 def setup(bot):
-    bot.add_cog(Cog(bot))
+    bot.add_cog(FractalCog(bot))

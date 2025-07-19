@@ -583,9 +583,7 @@ def setup_database_win_losses(conn):
         # Check if the table is empty, and if so, insert initial values
         cursor.execute("SELECT COUNT(*) FROM game_results")
         if cursor.fetchone()[0] == 0:
-            cursor.execute(
-                "INSERT INTO game_results (wins, losses) VALUES (0, 0)"
-            )
+            cursor.execute("INSERT INTO game_results (wins, losses) VALUES (0, 0)")
             conn.commit()
     except sqlite3.Error as error:
         print(error)
@@ -636,9 +634,7 @@ def check_country(country, letter, countries):
     return False
 
 
-def calculate_score(
-    country, countries, depth, alpha=float("-inf"), beta=float("inf")
-):
+def calculate_score(country, countries, depth, alpha=float("-inf"), beta=float("inf")):
     countries[country[0]].remove(country)
     player = depth % 2
     letter = get_letter(country)
@@ -660,18 +656,14 @@ def calculate_score(
     if player != 0:
         value = float("-inf")
         for i in possible_countries:
-            value = max(
-                value, calculate_score(i, countries, depth + 1, alpha, beta)
-            )
+            value = max(value, calculate_score(i, countries, depth + 1, alpha, beta))
             alpha = max(alpha, value)
             if alpha >= beta:
                 break  # beta cut-off
     else:
         value = float("inf")
         for i in possible_countries:
-            value = min(
-                value, calculate_score(i, countries, depth + 1, alpha, beta)
-            )
+            value = min(value, calculate_score(i, countries, depth + 1, alpha, beta))
             beta = min(beta, value)
             if beta <= alpha:
                 break  # alpha cut-off
@@ -722,7 +714,9 @@ async def send_game_results_ja(inter, win):
 async def send_game_results_botoboinya(interaction, win):
     update_game_results(botoboinya_db, win)
     wins, loses = get_wins_and_loses(botoboinya_db)
-    output = f"Кузобот: {wins}, Фениксобот: {loses}\nДебют: {str(first_country).capitalize()}"
+    output = (
+        f"Кузобот: {wins}, Фениксобот: {loses}\nДебют: {str(first_country).capitalize()}"
+    )
     if first_country in COUNTRY_EXCEPTIONS:
         output += " (исключение)"
     output += f", Кол-во ходов: {turn_count - 1}"
@@ -840,9 +834,7 @@ async def country_game_english_main_function(
     used_countries.add(output_country)
 
     if output_country is None:
-        await inter.followup.send(
-            f"Congratulations, you won the countries game! :tada:"
-        )  # Noqa
+        await inter.followup.send("Congratulations, you won the countries game! :tada:")  # Noqa
         await send_game_results_eng(inter, False)
         games_active[channel_id] = False
         return
@@ -851,8 +843,7 @@ async def country_game_english_main_function(
     await inter.followup.send(f"My turn: {output_country.capitalize()}")
     if letter is not None and len(countries[letter]) == 0:
         await inter.followup.send(
-            f"You ran out of countries that end in {letter.capitalize()}. "
-            f"You lost."
+            f"You ran out of countries that end in {letter.capitalize()}. You lost."
         )
         games_active[channel_id] = False
         await send_game_results_eng(inter, True)
@@ -892,9 +883,7 @@ replacements = {
     "北マケドニア": "キタマケドニア",
     "東ティモール": "ヒガしティモール",
 }
-output_replacements = {
-    to_katakana(value): key for key, value in replacements.items()
-}
+output_replacements = {to_katakana(value): key for key, value in replacements.items()}
 ALL_JA_COUNTRIES = [
     "アフガニスタン",
     "アルバニア",
@@ -1117,9 +1106,7 @@ async def country_game_ja_main_function(
     used_countries.add(output_country)
 
     if output_country is None:
-        await inter.followup.send(
-            f"おめでとうございます！国名ゲームに勝利しました！"
-        )  # Noqa
+        await inter.followup.send("おめでとうございます！国名ゲームに勝利しました！")  # Noqa
         await send_game_results_ja(inter, False)
         games_active[channel_id] = False
         return
@@ -1143,12 +1130,8 @@ class Countries(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.slash_command(
-        name="countries-ru", description="Начать игру в 'Страны'"
-    )
-    async def country_game_russian(
-        self, inter: disnake.ApplicationCommandInteraction
-    ):
+    @commands.slash_command(name="countries-ru", description="Начать игру в 'Страны'")
+    async def country_game_russian(self, inter: disnake.ApplicationCommandInteraction):
         channel_id = inter.channel.id
         if games_active.get(channel_id):
             await inter.send("Игра уже началась в этом канале.")
@@ -1165,10 +1148,7 @@ class Countries(commands.Cog):
         while games_active[channel_id]:
             try:
                 message = await self.bot.wait_for("message", timeout=timeout)
-                if (
-                    message.author == self.bot.user
-                    or message.channel.id != channel_id
-                ):
+                if message.author == self.bot.user or message.channel.id != channel_id:
                     continue
                 await country_game_russian_main_function(
                     inter,
@@ -1184,17 +1164,11 @@ class Countries(commands.Cog):
                     "Время вышло! Игра окончена, так как игроки не ответили."
                 )
 
-    @commands.slash_command(
-        name="countries-eng", description="Play the game 'Countries'"
-    )
-    async def country_game_english(
-        self, inter: disnake.ApplicationCommandInteraction
-    ):
+    @commands.slash_command(name="countries-eng", description="Play the game 'Countries'")
+    async def country_game_english(self, inter: disnake.ApplicationCommandInteraction):
         channel_id = inter.channel.id
         if games_active.get(channel_id):
-            await inter.send(
-                "The game has already been started in this channel."
-            )
+            await inter.send("The game has already been started in this channel.")
             return
 
         countries_dict = {i: ENG_COUNTRIES[i][:] for i in ENG_COUNTRIES}
@@ -1208,10 +1182,7 @@ class Countries(commands.Cog):
         while games_active[channel_id]:
             try:
                 message = await self.bot.wait_for("message", timeout=timeout)
-                if (
-                    message.author == self.bot.user
-                    or message.channel.id != channel_id
-                ):
+                if message.author == self.bot.user or message.channel.id != channel_id:
                     continue
                 await country_game_english_main_function(
                     inter,
@@ -1232,9 +1203,7 @@ class Countries(commands.Cog):
         description="日本語で国のしりとり",
         guild_ids=GUILD_IDS,
     )
-    async def country_game_japanese(
-        self, inter: disnake.ApplicationCommandInteraction
-    ):
+    async def country_game_japanese(self, inter: disnake.ApplicationCommandInteraction):
         channel_id = inter.channel.id
         if games_active.get(channel_id):
             await inter.send("このチャンネルではすでにゲームが始まっています。")
@@ -1251,10 +1220,7 @@ class Countries(commands.Cog):
         while games_active[channel_id]:
             try:
                 message = await self.bot.wait_for("message", timeout=timeout)
-                if (
-                    message.author == self.bot.user
-                    or message.channel.id != channel_id
-                ):
+                if message.author == self.bot.user or message.channel.id != channel_id:
                     continue
                 await country_game_ja_main_function(
                     inter,

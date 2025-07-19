@@ -1,13 +1,13 @@
 import os
+from asyncio import sleep
 from random import choice
-from time import sleep
 
 import disnake
 from disnake.ext import commands
 from dotenv import load_dotenv
 
 # сетуп
-load_dotenv()
+load_dotenv(override=True)
 TOKEN = os.getenv("DISCORD_TOKEN")
 intents = disnake.Intents.all()
 name = choice(
@@ -34,6 +34,7 @@ name = choice(
         "случайный выбор статуса",
         "GoodbyeDPI",
         "ゆめ2っき",
+        "/4d-tic-tac-toe",
     ]
 )
 bot = commands.Bot(
@@ -96,22 +97,6 @@ async def on_message(message: disnake.Message):
 @bot.slash_command(name="бу", description="пугает буу")
 async def boo(inter: disnake.ApplicationCommandInteraction):
     await inter.response.send_message("boo страшно", ephemeral=True, tts=True)
-
-
-@bot.slash_command(
-    name="счёт", description="считает", guild_ids=[657982996376453120]
-)
-async def count(
-    inter: disnake.ApplicationCommandInteraction, number: int
-) -> None:
-    if number < 1:
-        await inter.send("нет")
-        return
-    message = await inter.channel.send(1)
-    print(message)
-    for i in range(1, number):
-        sleep(1)
-        await message.edit(i + 1)
 
 
 load()
